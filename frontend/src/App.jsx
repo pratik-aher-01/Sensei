@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import Background from "./components/Background";
+import Background from "./components/Background.jsx";
 
 export default function App() {
   const [chat, setChat] = useState([]);
