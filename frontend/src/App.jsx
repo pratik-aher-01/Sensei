@@ -1,62 +1,64 @@
-import React, { useState } from "react";
-import Background from "./components/Background.jsx";
+import { useState } from "react";
+import Background from "./components/Background";
 
-export default function App() {
+function App() {
+  const [message, setMessage] = useState("");
   const [chat, setChat] = useState([]);
-  const [input, setInput] = useState("");
 
+  // send message handler
   const sendMessage = async () => {
-    if (!input) return;
-    const newChat = [...chat, { role: "user", content: input }];
-    setChat(newChat);
-    setInput("");
+    if (!message.trim()) return;
+
+    // Add user message to chat
+    setChat((prev) => [...prev, { sender: "user", text: message }]);
 
     try {
-      const res = await fetch("https://your-backend-url.onrender.com/chat", {
+      // call backend (replace with your Render URL)
+      const res = await fetch("https://your-backend.onrender.com/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: input }),
+        body: JSON.stringify({ message }),
       });
       const data = await res.json();
-      setChat([...newChat, { role: "bot", content: data.reply }]);
+
+      // add bot reply
+      setChat((prev) => [...prev, { sender: "bot", text: data.reply }]);
     } catch (err) {
       console.error(err);
+      setChat((prev) => [...prev, { sender: "bot", text: "Error connecting to server." }]);
     }
+
+    setMessage(""); // clear input
   };
 
   return (
-    <div className="relative h-screen w-screen overflow-hidden">
+    <div className="relative w-screen h-screen overflow-hidden">
       <Background />
 
       {/* Chat messages */}
-      <div className="absolute top-10 left-1/2 transform -translate-x-1/2 w-11/12 max-w-lg bg-black/60 text-white p-4 rounded-lg backdrop-blur-md h-[70%] overflow-y-auto shadow-lg">
+      <div className="absolute inset-0 overflow-y-auto p-4 z-10 text-white">
         {chat.map((c, i) => (
-          <div
-            key={i}
-            className={`my-2 ${
-              c.role === "user" ? "text-right text-blue-300" : "text-left text-green-300"
-            }`}
-          >
-            {c.content}
+          <div key={i} className={c.sender === "user" ? "text-right" : "text-left"}>
+            <p className="inline-block px-3 py-2 m-1 rounded-lg bg-black/40">
+              {c.text}
+            </p>
           </div>
         ))}
       </div>
 
-      {/* Floating input */}
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-11/12 max-w-lg flex bg-white/80 p-2 rounded-xl shadow-lg">
+      {/* Floating chatbox */}
+      <div className="chatbox z-20">
         <input
-          className="flex-1 p-2 rounded-l-lg outline-none text-black"
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
+          type="text"
+          value={message}
           placeholder="Type your message..."
+          onChange={(e) => setMessage(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && sendMessage()}
         />
-        <button
-          className="px-4 bg-blue-600 text-white rounded-r-lg"
-          onClick={sendMessage}
-        >
-          Send
-        </button>
+        <button onClick={sendMessage}>Send</button>
       </div>
     </div>
   );
 }
+
+export default App;
